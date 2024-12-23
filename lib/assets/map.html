@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Kakao Map</title>
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=4a657e8b4dd2fb5da5a4b099e1b1a01e"></script>
+    <style>
+        #map {
+          width: 100%;
+          height: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    var mapContainer = document.getElementById('map'),
+        mapOption = {
+            center: new kakao.maps.LatLng(37.566826, 126.9786567),
+            level: 3
+        };
+
+    var map = new kakao.maps.Map(mapContainer, mapOption);
+
+    // 경로 탐색 결과 마커 및 경로 표시
+    function displayRoute(route) {
+        var linePath = route.map(point => new kakao.maps.LatLng(point.y, point.x));
+        var polyline = new kakao.maps.Polyline({
+            path: linePath,
+            strokeWeight: 5,
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.7,
+            strokeStyle: 'solid'
+        });
+        polyline.setMap(map);
+
+        var startMarker = new kakao.maps.Marker({
+            position: linePath[0]
+        });
+        startMarker.setMap(map);
+
+        var endMarker = new kakao.maps.Marker({
+            position: linePath[linePath.length - 1]
+        });
+        endMarker.setMap(map);
+    }
+
+    // Flutter에서 호출할 수 있도록 함수 노출
+    window.displayRoute = displayRoute;
+</script>
+</body>
+</html>
