@@ -35,13 +35,35 @@ class KakaoNaviService {
             final duration = (summary['duration'] / 60).toStringAsFixed(0); // 분 단위
             final distance = (summary['distance'] / 1000).toStringAsFixed(1); // km 단위
 
+            // 🟡 vertexes 추출 (sections → roads → vertexes)
+            final vertexes = <List<double>>[];
+            if (route['sections'] != null) {
+              for (var section in route['sections']) {
+                if (section['roads'] != null) {
+                  for (var road in section['roads']) {
+                    if (road['vertexes'] != null) {
+                      for (int i = 0; i < road['vertexes'].length; i += 2) {
+                        vertexes.add([
+                          double.parse(road['vertexes'][i].toString()), // x 좌표
+                          double.parse(road['vertexes'][i + 1].toString()) // y 좌표
+                        ]);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
             print('🟡 Route Found: duration=$duration min, distance=$distance km');
+            print('🟡 Vertexes Count: ${vertexes.length}');
+
             return {
               'duration': duration,
               'distance': distance,
               'fare': summary['fare'],
               'origin': summary['origin'],
               'destination': summary['destination'],
+              'vertexes': vertexes, // 수정된 vertexes 반환
             };
           } else {
             print('❌ API Error: result_code=${route['result_code']}, message=${route['result_msg']}');

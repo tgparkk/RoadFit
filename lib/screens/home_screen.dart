@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/kakao_geocoding_service.dart';
-import '../services/kakao_navi_service.dart';
-import '../widgets/map_view.dart';
-import '../widgets/route_slider.dart';
+import '../services/kakao_geocoding_service.dart'; // 주소 → 좌표 변환 서비스
+import '../services/kakao_navi_service.dart'; // 경로 탐색 서비스
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -10,79 +8,133 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final TextEditingController _departureController = TextEditingController();
-  final TextEditingController _destinationController = TextEditingController();
+  final TextEditingController _startController = TextEditingController();
+  final TextEditingController _endController = TextEditingController();
 
-  bool _isRouteFetched = false;
-  String _selectedRoute = '카카오 경로';
-
-  List<Map<String, String>> _routeInfo = [];
   final KakaoGeocodingService _geocodingService = KakaoGeocodingService();
   final KakaoNaviService _naviService = KakaoNaviService();
 
-  /// 경로 탐색 실행
-  Future<void> _fetchRoutes() async {
-    String departure = _departureController.text;
-    String destination = _destinationController.text;
+  List<List<double>> _kakaoVertexes = []; // 정점 데이터를 저장할 리스트
+  bool _isLoading = false;
 
-    if (departure.isEmpty || destination.isEmpty) {
+  /// 경로 탐색
+  Future<void> _fetchRoute() async {
+    final startAddress = '강남 삼성동 100';//_startController.text.trim();
+    final endAddress = '전북 삼성동 100';//_endController.text.trim();
+
+    if (startAddress.isEmpty || endAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('출발지와 도착지를 입력하세요!')),
+        SnackBar(content: Text('출발지와 도착지 주소를 모두 입력해주세요!')),
       );
       return;
     }
 
     setState(() {
-      _isRouteFetched = false;
+      _isLoading = true;
     });
 
     try {
-      final departureCoordinates = await _geocodingService.getCoordinates(departure);
-      final destinationCoordinates = await _geocodingService.getCoordinates(destination);
+      // 주소 → 좌표 변환
+      final startCoords = await _geocodingService.getCoordinates(startAddress);
+      final endCoords = await _geocodingService.getCoordinates(endAddress);
 
-      if (departureCoordinates['x']!.isEmpty || destinationCoordinates['x']!.isEmpty) {
+      if (startCoords == null || endCoords == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('출발지 또는 도착지 주소가 잘못되었습니다.')),
+          SnackBar(content: Text('유효한 주소를 입력해주세요!')),
         );
+        setState(() {
+          _isLoading = false;
+        });
         return;
       }
 
-      final kakaoData = await _naviService.getRoute(
-        departureCoordinates['x']!,
-        departureCoordinates['y']!,
-        destinationCoordinates['x']!,
-        destinationCoordinates['y']!,
+      // 경로 탐색
+      final result = await _naviService.getRoute(
+        startCoords['x'].toString(),
+        startCoords['y'].toString(),
+        endCoords['x'].toString(),
+        endCoords['y'].toString(),
       );
 
-      if (kakaoData.isNotEmpty) {
-        setState(() {
-          _routeInfo = [
-            {'apiName': '카카오', 'duration': '${kakaoData['duration']}분', 'distance': '${kakaoData['distance']}km'},
-          ];
-          _isRouteFetched = true;
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('경로를 찾을 수 없습니다. 다시 시도해주세요.')),
-        );
-      }
+      setState(() {
+        _kakaoVertexes = (result['vertexes'] as List<dynamic>?)
+            ?.map<List<double>>((vertex) => [vertex[0], vertex[1]])
+            .toList() ??
+            [];
+        _isLoading = false;
+      });
+
+      print('🟡 Vertexes loaded: $_kakaoVertexes');
     } catch (e) {
-      print('❌ Exception: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('오류 발생: $e')),
+      );
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('경로 비교 앱')),
+      appBar: AppBar(title: Text('Home Screen')),
       body: Column(
         children: [
-          TextField(controller: _departureController, decoration: InputDecoration(labelText: '출발지')),
-          TextField(controller: _destinationController, decoration: InputDecoration(labelText: '도착지')),
-          ElevatedButton(onPressed: _fetchRoutes, child: Text('경로 비교')),
-          if (_isRouteFetched) RouteSlider(routeInfo: _routeInfo),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _startController,
+                  decoration: InputDecoration(
+                    labelText: '출발지 주소',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 8),
+                TextField(
+                  controller: _endController,
+                  decoration: InputDecoration(
+                    labelText: '도착지 주소',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _fetchRoute,
+                  child: _isLoading
+                      ? CircularProgressIndicator()
+                      : Text('경로 탐색'),
+                ),
+              ],
+            ),
+          ),
+          Divider(),
+          Expanded(
+            child: _kakaoVertexes.isEmpty
+                ? Center(child: Text('경로 정점이 없습니다.'))
+                : ListView.builder(
+              itemCount: _kakaoVertexes.length,
+              itemBuilder: (context, index) {
+                final vertex = _kakaoVertexes[index];
+                return ListTile(
+                  title: Text('정점 $index'),
+                  subtitle: Text('X: ${vertex[0]}, Y: ${vertex[1]}'),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _startController.dispose();
+    _endController.dispose();
+    super.dispose();
   }
 }
