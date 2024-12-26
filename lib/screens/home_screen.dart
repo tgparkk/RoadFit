@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/kakao_geocoding_service.dart'; // 주소 → 좌표 변환 서비스
-import '../services/kakao_navi_service.dart'; // 경로 탐색 서비스
+import 'package:flutter/services.dart';
+import '../services/kakao_geocoding_service.dart';
+import '../services/kakao_navi_service.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -14,7 +15,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final KakaoGeocodingService _geocodingService = KakaoGeocodingService();
   final KakaoNaviService _naviService = KakaoNaviService();
 
-  List<List<double>> _kakaoVertexes = []; // 정점 데이터를 저장할 리스트
+  List<List<double>> _kakaoVertexes = [];
   bool _isLoading = false;
 
   /// 경로 탐색
@@ -125,6 +126,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
+          ),
+          Divider(),
+          Expanded(
+            child: _kakaoVertexes.isNotEmpty
+                ? AndroidView(
+              key: ValueKey(_kakaoVertexes.hashCode), // ✅ 키 추가
+              viewType: 'kakao-map-view',
+              layoutDirection: TextDirection.ltr,
+              creationParams: <String, dynamic>{
+                'vertexes': _kakaoVertexes,
+              },
+              creationParamsCodec: const StandardMessageCodec(),
+            )
+                : Center(child: Text('경로를 탐색한 후 지도를 표시합니다.')),
           ),
         ],
       ),
