@@ -9,6 +9,9 @@ import android.util.Log
 class KakaoMapViewFactory : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
     override fun create(context: Context, id: Int, args: Any?): PlatformView {
         Log.d("KakaoMapViewFactory", "✅ KakaoMapViewFactory.create called")
+        Log.d("KakaoMapViewFactory", "✅ args: $args")
+        Log.d("KakaoMapViewFactory", "✅ args type: ${args?.javaClass?.name}")
         return KakaoMapView(context, args)
     }
 }
+
