@@ -8,7 +8,7 @@
 
     <application
         android:label="road_fit"
-        android:name="${applicationName}"
+        android:name=".MyApplication"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
@@ -38,9 +38,6 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <meta-data
-            android:name="com.kakao.vectormap.KAKAO_MAP_KEY"
-            android:value="b20862b7b0e3d319e0cd0d9c1aa40d2e"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
