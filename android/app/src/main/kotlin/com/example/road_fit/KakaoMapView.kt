@@ -1,29 +1,26 @@
 package com.example.road_fit
 
 import android.content.Context
+import android.graphics.Color
 import android.util.Log
 import android.view.View
-import com.kakao.vectormap.KakaoMap
-import com.kakao.vectormap.KakaoMapReadyCallback
-import com.kakao.vectormap.MapLifeCycleCallback
-import com.kakao.vectormap.MapView
+import com.kakao.vectormap.*
+import com.kakao.vectormap.route.*
 import io.flutter.plugin.platform.PlatformView
 
 class KakaoMapView(context: Context, args: Any?) : PlatformView {
     private val mapView: MapView = MapView(context)
-    private var kakaoMap: KakaoMap? = null // 🔄 var로 변경
+    private var kakaoMap: KakaoMap? = null
+    private var routeLineLayer: RouteLineLayer? = null
 
     init {
-        // Flutter에서 전달된 매개변수 확인
         if (args is Map<*, *>) {
             println("Arguments from Flutter: $args")
         }
-
-        // Kakao Map 초기화
-        initializeMap()
+        initializeMap(args)
     }
 
-    private fun initializeMap() {
+    private fun initializeMap(args: Any?) {
         mapView.start(
             object : MapLifeCycleCallback() {
                 override fun onMapDestroy() {
@@ -37,16 +34,59 @@ class KakaoMapView(context: Context, args: Any?) : PlatformView {
             object : KakaoMapReadyCallback() {
                 override fun onMapReady(map: KakaoMap) {
                     Log.d("KakaoMapView", "🗺️ Kakao Map is Ready")
-                    kakaoMap = map // 🔄 var로 선언했기 때문에 재할당 가능
-                    setupMap(map)
+                    kakaoMap = map
+                    routeLineLayer = kakaoMap?.getRouteLineManager()?.getLayer()
+                    if (routeLineLayer == null) {
+                        Log.e("KakaoMapView", "❌ RouteLineLayer is null")
+                        return
+                    }
+                    setupMap(map, args)
                 }
             }
         )
     }
 
-    private fun setupMap(kakaoMap: KakaoMap) {
+    private fun setupMap(map: KakaoMap, args: Any?) {
         Log.d("KakaoMapView", "📍 Map Initialization Complete")
-        // KakaoMap 객체를 사용해 추가적인 설정을 진행
+
+        if (args is Map<*, *>) {
+            val vertexes = args["vertexes"] as? List<*>
+            if (vertexes != null) {
+                drawRouteLine(vertexes)
+            }
+        }
+    }
+
+    private fun drawRouteLine(vertexes: List<*>) {
+        try {
+            if (routeLineLayer == null) {
+                Log.e("KakaoMapView", "❌ RouteLineLayer is null")
+                return
+            }
+
+            val stylesSet = RouteLineStylesSet.from(
+                RouteLineStyles.from(RouteLineStyle.from(10f, Color.BLUE))
+            )
+
+            val segment = RouteLineSegment.from(
+                vertexes.mapNotNull { vertex ->
+                    if (vertex is List<*> && vertex.size == 2) {
+                        val x = (vertex[0] as Number).toDouble()
+                        val y = (vertex[1] as Number).toDouble()
+                        LatLng.from(y, x)
+                    } else null
+                }
+            ).setStyles(stylesSet.getStyles(0))
+
+            val options = RouteLineOptions.from(listOf(segment))
+                .setStylesSet(stylesSet)
+
+            routeLineLayer?.addRouteLine(options)
+            Log.d("KakaoMapView", "🛣️ RouteLine added successfully")
+
+        } catch (e: Exception) {
+            Log.e("KakaoMapView", "❌ Error drawing RouteLine: ${e.message}")
+        }
     }
 
     override fun getView(): View {

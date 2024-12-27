@@ -114,21 +114,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Divider(),
           Expanded(
-            child: _kakaoVertexes.isEmpty
-                ? Center(child: Text('경로 정점이 없습니다.'))
-                : ListView.builder(
-              itemCount: _kakaoVertexes.length,
-              itemBuilder: (context, index) {
-                final vertex = _kakaoVertexes[index];
-                return ListTile(
-                  title: Text('정점 $index'),
-                  subtitle: Text('X: ${vertex[0]}, Y: ${vertex[1]}'),
-                );
-              },
-            ),
-          ),
-          Divider(),
-          Expanded(
             child: _kakaoVertexes.isNotEmpty
                 ? AndroidView(
               key: ValueKey(_kakaoVertexes.hashCode), // ✅ 키 추가
