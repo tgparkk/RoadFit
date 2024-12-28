@@ -54,42 +54,61 @@ class KakaoMapView(context: Context, args: Any?) : PlatformView {
             return
         }
 
-        // args 타입과 내용 강제 출력
         Log.d("KakaoMapView", "🛠️ args runtime type: ${args::class.java.name}")
-        Log.d("KakaoMapView", "🛠️ args toString: $args")
-/*
-        try {
-            val jsonString = args.toString()
-            Log.d("KakaoMapView", "🛠️ args as String: $jsonString")
-        } catch (e: Exception) {
-            Log.e("KakaoMapView", "❌ Exception while printing args: ${e.message}")
-        }
-*/
+        Log.d("KakaoMapView", "🛠️ args content: $args")
+
         if (args is Map<*, *>) {
             Log.d("KakaoMapView", "✅ args is Map")
 
-            val kakaoVertexes = args["kakaoVertexes"] as? List<*>
-            Log.d("KakaoMapView", "🟦 Kakao Vertexes: $kakaoVertexes")
-            if (kakaoVertexes != null && kakaoVertexes.isNotEmpty()) {
-                drawRouteLine(kakaoVertexes, "KAKAO")
+            // 🔍 Kakao Vertexes 확인
+            val kakaoVertexes = args["kakaoVertexes"]
+            Log.d("KakaoMapView", "🟦 Kakao Vertexes (Raw): $kakaoVertexes")
+            if (kakaoVertexes is List<*>) {
+                Log.d("KakaoMapView", "🟦 Kakao Vertexes Size: ${kakaoVertexes.size}")
+                if (kakaoVertexes.isNotEmpty()) {
+                    Log.d("KakaoMapView", "🟦 Kakao Vertexes are valid")
+                    drawRouteLine(kakaoVertexes, "KAKAO")
+                } else {
+                    Log.w("KakaoMapView", "⚠️ Kakao Vertexes are empty")
+                }
             } else {
-                Log.w("KakaoMapView", "⚠️ Kakao Vertexes are null or empty")
+                Log.e("KakaoMapView", "❌ Kakao Vertexes are not a List")
             }
 
-            val tmapVertexes = args["tmapVertexes"] as? List<*>
-            Log.d("KakaoMapView", "🟥 TMap Vertexes: $tmapVertexes")
-            if (tmapVertexes != null && tmapVertexes.isNotEmpty()) {
-                drawRouteLine(tmapVertexes, "TMAP")
+            // 🔍 TMap Vertexes 확인
+            val tmapVertexes = args["tmapVertexes"]
+            Log.d("KakaoMapView", "🟥 TMap Vertexes (Raw): $tmapVertexes")
+            if (tmapVertexes is List<*>) {
+                Log.d("KakaoMapView", "🟥 TMap Vertexes Size: ${tmapVertexes.size}")
+                if (tmapVertexes.isNotEmpty()) {
+                    Log.d("KakaoMapView", "🟥 TMap Vertexes are valid")
+                    drawRouteLine(tmapVertexes, "TMAP")
+                } else {
+                    Log.w("KakaoMapView", "⚠️ TMap Vertexes are empty")
+                }
             } else {
-                Log.w("KakaoMapView", "⚠️ TMap Vertexes are null or empty")
+                Log.e("KakaoMapView", "❌ TMap Vertexes are not a List")
             }
+
+            // 🔍 Naver Vertexes 확인
+            val naverVertexes = args["naverVertexes"]
+            Log.d("KakaoMapView", "🟩 Naver Vertexes (Raw): $naverVertexes")
+            if (naverVertexes is List<*>) {
+                Log.d("KakaoMapView", "🟩 Naver Vertexes Size: ${naverVertexes.size}")
+                if (naverVertexes.isNotEmpty()) {
+                    Log.d("KakaoMapView", "🟩 Naver Vertexes are valid")
+                    drawRouteLine(naverVertexes, "NAVER")
+                } else {
+                    Log.w("KakaoMapView", "⚠️ Naver Vertexes are empty")
+                }
+            } else {
+                Log.e("KakaoMapView", "❌ Naver Vertexes are not a List")
+            }
+
         } else {
             Log.e("KakaoMapView", "❌ args is not a Map, actual type: ${args::class.java.name}")
         }
     }
-
-
-
 
 
     private fun drawRouteLine(vertexes: List<*>, source: String) {
@@ -99,13 +118,15 @@ class KakaoMapView(context: Context, args: Any?) : PlatformView {
                 return
             }
 
-            Log.d("KakaoMapView", "📍 RouteLineLayer is not null")
+            Log.d("KakaoMapView", "📍 Drawing route line for: $source")
+            Log.d("KakaoMapView", "🔍 Vertexes Count: ${vertexes.size}")
 
             val stylesSet = RouteLineStylesSet.from(
                 RouteLineStyles.from(
                     when (source) {
                         "KAKAO" -> RouteLineStyle.from(10f, Color.BLUE)
                         "TMAP" -> RouteLineStyle.from(10f, Color.RED)
+                        "NAVER" -> RouteLineStyle.from(10f, Color.GREEN)
                         else -> RouteLineStyle.from(10f, Color.GRAY)
                     }
                 )
@@ -117,7 +138,10 @@ class KakaoMapView(context: Context, args: Any?) : PlatformView {
                         val x = (vertex[0] as Number).toDouble()
                         val y = (vertex[1] as Number).toDouble()
                         LatLng.from(y, x)
-                    } else null
+                    } else {
+                        Log.w("KakaoMapView", "⚠️ Invalid vertex format: $vertex")
+                        null
+                    }
                 }
             ).setStyles(stylesSet.getStyles(0))
 
@@ -131,6 +155,7 @@ class KakaoMapView(context: Context, args: Any?) : PlatformView {
             Log.e("KakaoMapView", "❌ Error drawing RouteLine for $source: ${e.message}")
         }
     }
+
 
     override fun getView(): View {
         Log.d("KakaoMapView", "🟢 getView() called")

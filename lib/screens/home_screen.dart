@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../services/kakao_geocoding_service.dart';
 import '../services/kakao_navi_service.dart';
 import '../services/tmap_navi_service.dart';
+import '../services/naver_navi_service.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -14,11 +15,15 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _endController = TextEditingController();
 
   final KakaoGeocodingService _geocodingService = KakaoGeocodingService();
+
   final KakaoNaviService _kakaoNaviService = KakaoNaviService();
   final TMapNaviService _tmapNaviService = TMapNaviService();
+  final NaverNaviService _naverNaviService = NaverNaviService();
 
   List<List<double>> _kakaoVertexes = [];
   List<List<double>> _tmapVertexes = [];
+  List<List<double>> _naverVertexes = [];
+
   bool _isLoading = false;
 
   /// 📍 공통 좌표 변환
@@ -75,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     List<List<double>> kakaoVertexes = [];
     List<List<double>> tmapVertexes = [];
+    List<List<double>> naverVertexes = [];
 
     try {
       // 🟦 카카오 경로 탐색
@@ -114,19 +120,35 @@ class _HomeScreenState extends State<HomeScreen> {
       print('❌ 티맵 경로 탐색 오류: $e');
     }
 
+    try {
+      // 🟩 네이버 경로 탐색
+      final naverResult = await _naverNaviService.getRoute(
+        coords['startX']!,
+        coords['startY']!,
+        coords['endX']!,
+        coords['endY']!,
+      );
+      naverVertexes = (naverResult['vertexes'] as List<dynamic>?)
+          ?.map<List<double>>((vertex) => [vertex[0], vertex[1]])
+          .toList() ??
+          [];
+      print('🟩 Naver Vertexes loaded: ${naverVertexes.length}');
+    } catch (e) {
+      print('❌ Naver API Error: $e');
+    }
+
     // ✅ 상태 업데이트 (항상 갱신)
     setState(() {
       _kakaoVertexes = kakaoVertexes;
       _tmapVertexes = tmapVertexes;
+      _naverVertexes = naverVertexes;
       _isLoading = false;
     });
 
-    if (kakaoVertexes.isNotEmpty) {
-      print('✅ Kakao 경로가 지도에 표시됩니다.');
-    }
-    if (tmapVertexes.isNotEmpty) {
-      print('✅ TMap 경로가 지도에 표시됩니다.');
-    }
+    print('🟦 Kakao Vertexes Before Passing: $_kakaoVertexes');
+    print('🟥 TMap Vertexes Before Passing: $_tmapVertexes');
+    print('🟩 Naver Vertexes Before Passing: $_naverVertexes');
+
   }
 
   @override
@@ -168,12 +190,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Divider(),
           Expanded(
             child: AndroidView(
-              key: ValueKey(_kakaoVertexes.hashCode ^ _tmapVertexes.hashCode),
+              key: ValueKey(_kakaoVertexes.hashCode ^ _tmapVertexes.hashCode ^ _naverVertexes.hashCode),
               viewType: 'kakao-map-view',
               layoutDirection: TextDirection.ltr,
               creationParams: <String, dynamic>{
                 'kakaoVertexes': _kakaoVertexes,
                 'tmapVertexes': _tmapVertexes,
+                'naverVertexes': _naverVertexes,
               },
               creationParamsCodec: const StandardMessageCodec(),
             ),
