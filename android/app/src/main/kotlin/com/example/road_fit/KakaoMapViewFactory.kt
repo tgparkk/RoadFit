@@ -13,9 +13,10 @@ class KakaoMapViewFactory : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
         Log.d("KakaoMapViewFactory", "✅ args type: ${args?.javaClass?.name}")
 
         if (args is Map<*, *>) {
-            Log.d("KakaoMapViewFactory", "🟦 Kakao Vertexes: ${args["kakaoVertexes"]}")
-            Log.d("KakaoMapViewFactory", "🟥 TMap Vertexes: ${args["tmapVertexes"]}")
-            Log.d("KakaoMapViewFactory", "🟩 Naver Vertexes: ${args["naverVertexes"]}")
+            Log.d("KakaoMapViewFactory", "🟦 Kakao Vertexes Exist: ${args["kakaoVertexes"] != null && (args["kakaoVertexes"] as? List<*>)?.isNotEmpty() == true}")
+            Log.d("KakaoMapViewFactory", "🟥 TMap Vertexes Exist: ${args["tmapVertexes"] != null && (args["tmapVertexes"] as? List<*>)?.isNotEmpty() == true}")
+            Log.d("KakaoMapViewFactory", "🟩 Naver Vertexes Exist: ${args["naverVertexes"] != null && (args["naverVertexes"] as? List<*>)?.isNotEmpty() == true}")
+
 
             if (!args.containsKey("naverVertexes")) {
                 Log.e("KakaoMapViewFactory", "❌ 'naverVertexes' key is missing in args!")

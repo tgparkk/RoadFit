@@ -5,8 +5,11 @@ import io.flutter.embedding.engine.FlutterEngine
 import com.example.road_fit.KakaoMapViewFactory
 import com.kakao.vectormap.KakaoMapSdk
 import android.util.Log
+import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    private val CHANNEL = "kakao_map_channel"
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         Log.d("MainActivity", "✅ FlutterEngine Initialized")
@@ -15,5 +18,21 @@ class MainActivity : FlutterActivity() {
             "kakao-map-view", KakaoMapViewFactory()
         )
         Log.d("MainActivity", "✅ KakaoMapViewFactory Registered")
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "kakao_map_channel")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "updateFocusedRoute") {
+                    val focusedRoute = call.argument<String>("focusedRoute")
+                    if (focusedRoute != null) {
+                        KakaoMapView.redrawFocusedRoute(focusedRoute)
+                        result.success("Focused route updated successfully")
+                    } else {
+                        result.error("INVALID_ARGUMENT", "Focused route is null", null)
+                    }
+                } else {
+                    result.notImplemented()
+                }
+            }
+
     }
 }
