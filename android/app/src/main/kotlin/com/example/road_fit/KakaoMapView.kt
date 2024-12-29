@@ -84,9 +84,9 @@ class KakaoMapView(context: Context, args: Any?) : PlatformView {
         tmapVertexes = tmap
         naverVertexes = naver
 
-        Log.d("KakaoMapView", "🟦 Kakao Vertexes: $kakaoVertexes")
-        Log.d("KakaoMapView", "🟥 TMap Vertexes: $tmapVertexes")
-        Log.d("KakaoMapView", "🟩 Naver Vertexes: $naverVertexes")
+        Log.d("KakaoMapView", "🟦 Kakao Vertexes Count: ${kakaoVertexes?.size ?: 0}")
+        Log.d("KakaoMapView", "🟥 TMap Vertexes Count: ${tmapVertexes?.size ?: 0}")
+        Log.d("KakaoMapView", "🟩 Naver Vertexes Count: ${naverVertexes?.size ?: 0}")
 
         redrawRouteLines("") // 모든 경로 다시 그리기
     }
@@ -102,20 +102,18 @@ class KakaoMapView(context: Context, args: Any?) : PlatformView {
     /**
      * 🛣️ 모든 라인을 다시 그립니다.
      */
-    private fun redrawRouteLines(focusedRoute: String) {
+    fun redrawRouteLines(focusedRoute: String) {
         Log.d("KakaoMapView", "🔄 Starting redrawRouteLines with focusedRoute: $focusedRoute")
 
         if (routeLineLayer == null) {
-            Log.e("KakaoMapView", "❌ RouteLineLayer is null - Cannot draw routes")
+            Log.e("KakaoMapView", "❌ RouteLineLayer is null")
             return
         }
 
         try {
-            // 🗑️ 기존 라인 제거
             routeLineLayer?.removeAll()
             Log.d("KakaoMapView", "🗑️ All route lines removed from RouteLineLayer")
 
-            // 🟦 Kakao 경로 그리기
             if (kakaoVertexes != null && kakaoVertexes!!.isNotEmpty()) {
                 Log.d("KakaoMapView", "🟦 Kakao Vertexes Exist: true | Size: ${kakaoVertexes!!.size}")
                 drawRouteLine(kakaoVertexes!!, Color.BLUE, "KAKAO", focusedRoute == "Kakao")
@@ -123,7 +121,6 @@ class KakaoMapView(context: Context, args: Any?) : PlatformView {
                 Log.w("KakaoMapView", "⚠️ Kakao Vertexes are null or empty")
             }
 
-            // 🟥 TMap 경로 그리기
             if (tmapVertexes != null && tmapVertexes!!.isNotEmpty()) {
                 Log.d("KakaoMapView", "🟥 TMap Vertexes Exist: true | Size: ${tmapVertexes!!.size}")
                 drawRouteLine(tmapVertexes!!, Color.RED, "TMAP", focusedRoute == "TMap")
@@ -131,7 +128,6 @@ class KakaoMapView(context: Context, args: Any?) : PlatformView {
                 Log.w("KakaoMapView", "⚠️ TMap Vertexes are null or empty")
             }
 
-            // 🟩 Naver 경로 그리기
             if (naverVertexes != null && naverVertexes!!.isNotEmpty()) {
                 Log.d("KakaoMapView", "🟩 Naver Vertexes Exist: true | Size: ${naverVertexes!!.size}")
                 drawRouteLine(naverVertexes!!, Color.GREEN, "NAVER", focusedRoute == "Naver")
@@ -144,6 +140,7 @@ class KakaoMapView(context: Context, args: Any?) : PlatformView {
             Log.e("KakaoMapView", "❌ Error during redrawRouteLines: ${e.localizedMessage}")
         }
     }
+
 
 
     private fun drawRouteLine(vertexes: List<*>, color: Int, source: String, isFocused: Boolean) {
@@ -242,12 +239,23 @@ class KakaoMapView(context: Context, args: Any?) : PlatformView {
     companion object {
         var currentInstance: KakaoMapView? = null
 
+        /**
+         * Flutter로부터 전달된 Vertex 업데이트
+         */
         fun updateVertexes(kakao: List<*>, tmap: List<*>, naver: List<*>) {
-            currentInstance?.updateVertexesInternal(kakao, tmap, naver)
+            currentInstance?.apply {
+                Log.d("KakaoMapView", "✅ updateVertexes called via MethodChannel")
+                updateVertexesInternal(kakao, tmap, naver)
+            } ?: Log.e("KakaoMapView", "❌ No active KakaoMapView instance found")
         }
 
+        /**
+         * 특정 경로 강조
+         */
         fun redrawFocusedRoute(focusedRoute: String) {
             currentInstance?.redrawFocusedRouteInternal(focusedRoute)
+                ?: Log.e("KakaoMapView", "❌ redrawFocusedRoute failed: No active KakaoMapView instance")
         }
     }
+
 }

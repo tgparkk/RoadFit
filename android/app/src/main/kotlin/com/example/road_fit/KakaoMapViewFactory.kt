@@ -7,24 +7,23 @@ import io.flutter.plugin.common.StandardMessageCodec
 import android.util.Log
 
 class KakaoMapViewFactory : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
-    override fun create(context: Context, id: Int, args: Any?): PlatformView {
-        Log.d("KakaoMapViewFactory", "✅ KakaoMapViewFactory.create called")
-        Log.d("KakaoMapViewFactory", "✅ args: $args")
-        Log.d("KakaoMapViewFactory", "✅ args type: ${args?.javaClass?.name}")
-
+    override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
         if (args is Map<*, *>) {
-            Log.d("KakaoMapViewFactory", "🟦 Kakao Vertexes Exist: ${args["kakaoVertexes"] != null && (args["kakaoVertexes"] as? List<*>)?.isNotEmpty() == true}")
-            Log.d("KakaoMapViewFactory", "🟥 TMap Vertexes Exist: ${args["tmapVertexes"] != null && (args["tmapVertexes"] as? List<*>)?.isNotEmpty() == true}")
-            Log.d("KakaoMapViewFactory", "🟩 Naver Vertexes Exist: ${args["naverVertexes"] != null && (args["naverVertexes"] as? List<*>)?.isNotEmpty() == true}")
+            val kakaoVertexes = args["kakaoVertexes"] as? List<*>
+            val tmapVertexes = args["tmapVertexes"] as? List<*>
+            val naverVertexes = args["naverVertexes"] as? List<*>
+            val focusedRoute = args["focusedRoute"] as? String
 
+            Log.d("KakaoMapViewFactory", "🟦 Kakao Vertexes Exist: ${kakaoVertexes != null && kakaoVertexes.isNotEmpty()}")
+            Log.d("KakaoMapViewFactory", "🟥 TMap Vertexes Exist: ${tmapVertexes != null && tmapVertexes.isNotEmpty()}")
+            Log.d("KakaoMapViewFactory", "🟩 Naver Vertexes Exist: ${naverVertexes != null && naverVertexes.isNotEmpty()}")
+            Log.d("KakaoMapViewFactory", "🎯 Focused Route: $focusedRoute")
 
-            if (!args.containsKey("naverVertexes")) {
-                Log.e("KakaoMapViewFactory", "❌ 'naverVertexes' key is missing in args!")
-            }
+            return KakaoMapView(context, args)
         } else {
-            Log.e("KakaoMapViewFactory", "❌ args is not a Map, actual type: ${args?.javaClass?.name}")
+            Log.e("KakaoMapViewFactory", "❌ Invalid arguments passed")
+            return KakaoMapView(context, null)
         }
-
-        return KakaoMapView(context, args)
     }
+
 }
