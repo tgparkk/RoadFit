@@ -5,6 +5,9 @@ import '../services/kakao_navi_service.dart';
 import '../services/tmap_navi_service.dart';
 import '../services/naver_navi_service.dart';
 
+import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
+
+
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -25,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Map<String, String>> _routeInfo = [];
   bool _isLoading = false;
+
 
   /// ✅ 슬라이더 포커싱된 인덱스
   static const MethodChannel _channel = MethodChannel('kakao_map_channel');
@@ -230,7 +234,91 @@ class _HomeScreenState extends State<HomeScreen> {
 
   }
 
+  /// ✅ 카카오내비 실행 함수
+  Future<void> _launchKakaoNavi() async {
+    try {
 
+      // 카카오내비 앱 설치 여부 확인
+      if (await NaviApi.instance.isKakaoNaviInstalled()) {
+        // ✅ 카카오내비 앱 실행
+        final uri = NaviApi.instance.navigate(
+          destination: Location(
+              name: '카카오 판교오피스',
+              x: '127.108640',
+              y: '37.402111'
+          ),
+          option: NaviOption(coordType: CoordType.wgs84),
+        );
+
+      } else {
+        // 카카오내비 설치 페이지로 이동
+        /*
+        startActivity(
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse(Constants.WEB_NAVI_INSTALL)
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        )
+        */
+      }
+    } catch (e) {
+      print('❌ 카카오내비 실행 오류: $e');
+    }
+  }
+
+  /// ✅ 알림창 표시 함수
+  Future<void> _showNaviDialog(String apiName) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true, // 외부 터치로 닫기
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('$apiName 내비게이션 실행'),
+          content: Text('$apiName 내비 앱을 실행하시겠습니까?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('취소'),
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+              },
+            ),
+            ElevatedButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop(); // 다이얼로그 닫기
+                if (apiName == 'Kakao') {
+                  _launchKakaoNavi(); // 카카오 내비 실행
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// ✅ 슬라이더 카드 터치 이벤트
+  void _onSliderTouched(String apiName) {
+    if (apiName == 'Kakao') {
+      _showNaviDialog(apiName);
+    } else {
+      print('❌ $apiName 내비게이션 실행은 아직 구현되지 않았습니다.');
+    }
+  }
+
+  /// ✅ 경로 카드 UI
+  Widget _buildRouteCard(String apiName, String totalTime, String totalDistance) {
+    return GestureDetector(
+      onTap: () => _onSliderTouched(apiName), // 터치 이벤트
+      child: Card(
+        margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: ListTile(
+          title: Text('$apiName 경로 정보'),
+          subtitle: Text('예상 시간: $totalTime | 거리: $totalDistance'),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -328,15 +416,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRouteCard(String apiName, String totalTime, String totalDistance) {
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 8),
-      child: ListTile(
-        title: Text('$apiName 경로 정보'),
-        subtitle: Text('시간: $totalTime | 거리: $totalDistance'),
-      ),
-    );
-  }
 
   @override
   void dispose() {
