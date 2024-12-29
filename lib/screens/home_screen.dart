@@ -30,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static const MethodChannel _channel = MethodChannel('kakao_map_channel');
   int _currentFocusedIndex = 0;
 
+  /// 📊 정점 업데이트 (MethodChannel)
   Future<void> _updateVertexes() async {
     try {
       await _channel.invokeMethod('updateVertexes', {
@@ -224,7 +225,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ];
       _isLoading = false;
     });
-
+    // 🟢 Vertex 업데이트
+    await _updateVertexes();
 
   }
 
@@ -263,13 +265,17 @@ class _HomeScreenState extends State<HomeScreen> {
           // 🗺️ 지도 영역
           Positioned.fill(
             child: AndroidView(
-              key: ValueKey(_kakaoVertexes.hashCode ^ _tmapVertexes.hashCode ^ _naverVertexes.hashCode),
+              //key: ValueKey(_kakaoVertexes.hashCode ^ _tmapVertexes.hashCode ^ _naverVertexes.hashCode),
+              key: ValueKey('kakao-map-view'), // 고정된 key 사용
               viewType: 'kakao-map-view',
               layoutDirection: TextDirection.ltr,
               creationParams: {
                 'kakaoVertexes': _kakaoVertexes,
                 'tmapVertexes': _tmapVertexes,
                 'naverVertexes': _naverVertexes,
+                'focusedRoute': _routeInfo.isNotEmpty && _currentFocusedIndex < _routeInfo.length
+                    ? _routeInfo[_currentFocusedIndex]['apiName']
+                    : null,
               },
               creationParamsCodec: const StandardMessageCodec(),
             )

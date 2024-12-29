@@ -21,18 +21,32 @@ class MainActivity : FlutterActivity() {
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "kakao_map_channel")
             .setMethodCallHandler { call, result ->
-                if (call.method == "updateFocusedRoute") {
-                    val focusedRoute = call.argument<String>("focusedRoute")
-                    if (focusedRoute != null) {
-                        KakaoMapView.redrawFocusedRoute(focusedRoute)
-                        result.success("Focused route updated successfully")
-                    } else {
-                        result.error("INVALID_ARGUMENT", "Focused route is null", null)
+                when (call.method) {
+                    "updateVertexes" -> {
+                        val kakao = call.argument<List<*>>("kakaoVertexes")
+                        val tmap = call.argument<List<*>>("tmapVertexes")
+                        val naver = call.argument<List<*>>("naverVertexes")
+
+                        if (kakao != null && tmap != null && naver != null) {
+                            KakaoMapView.updateVertexes(kakao, tmap, naver)
+                            result.success("Vertexes updated successfully")
+                        } else {
+                            result.error("INVALID_ARGUMENT", "One or more vertex lists are null", null)
+                        }
                     }
-                } else {
-                    result.notImplemented()
+                    "updateFocusedRoute" -> {
+                        val focusedRoute = call.argument<String>("focusedRoute")
+                        if (focusedRoute != null) {
+                            KakaoMapView.redrawFocusedRoute(focusedRoute)
+                            result.success("Focused route updated successfully")
+                        } else {
+                            result.error("INVALID_ARGUMENT", "Focused route is null", null)
+                        }
+                    }
+                    else -> result.notImplemented()
                 }
             }
+
 
     }
 }
