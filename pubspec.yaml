@@ -42,6 +42,9 @@ dependencies:
   # kako
   kakao_flutter_sdk: ^1.9.5
 
+  #url_launcher:
+  url_launcher: ^6.2.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
