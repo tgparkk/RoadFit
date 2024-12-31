@@ -5,9 +5,9 @@ class KakaoNaviService {
   final String apiKey = '83c5d637b795bf49ea13c7f63dbfc0f0';
 
   /// 출발지와 도착지 좌표를 사용해 경로 탐색
-  Future<Map<String, dynamic>> getRoute(String startX, String startY, String endX, String endY) async {
+  Future<Map<String, dynamic>> getRoute(String startX, String startY, String endX, String endY, String selectedPriority) async {
     final String apiUrl =
-        'https://apis-navi.kakaomobility.com/v1/directions?origin=$startX,$startY&destination=$endX,$endY';
+        'https://apis-navi.kakaomobility.com/v1/directions?origin=$startX,$startY&destination=$endX,$endY&priority=$selectedPriority';
 
     print('🟢 Request URL: $apiUrl');
 
